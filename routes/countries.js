@@ -1,5 +1,5 @@
 const express = require('express');
-const router = express.Router()
+const router = express.Router();
 
 const CountryModel = require('../models/Country');
 
@@ -18,7 +18,7 @@ router.get('/count', async (req, res) => {
 router.get('/count/:name', async (req, res) => {
   const name = req.params.name;
   const totalCountries = await CountryModel.count({
-    name: new RegExp('^' + name + '.*'),
+    name: new RegExp('.*' + name + '.*'),
   });
   return res.status(200).json({
     "msg": `total countries starting with ${name} : ${totalCountries}`
@@ -45,21 +45,36 @@ router.delete('/:id', async (req, res) => {
   });
 });
 
+router.put('/:id', async (req, res) => {
+  const countryID = req.params.id;
+  const {name, isoCode, population} = req.body;
+
+  const country = await CountryModel.findOneAndUpdate({_id: countryID}, {name, isoCode, population}, {new: true});
+  return res.status(200).json(country);
+});
+
 router.post('/', async (req, res) => {
+  const {name, isoCode, population} = req.body;
+
   const country = await CountryModel.create({
-    name: req.body.name,
-    isoCode: req.body.isoCode,
+    name: name,
+    isoCode: isoCode,
+    population: population,
   });
 
   return res.status(200).json(country);
 });
 
-router.put('/:id', async (req, res) => {
-  const countryID = req.params.id;
-  const {name, isoCode} = req.body;
+router.post('/many', async (req, res) => {
+  const {countries} = req.body;
 
-  const country = await CountryModel.findByIdAndUpdate({_id: countryID}, {name, isoCode}, {new: true});
-  return res.status(200).json(country);
+  const input = countries.map((value) => ({
+    name: value.name,
+    isoCode: value.isoCode,
+    population: value.population,
+  }));
+  const createdCountries = await CountryModel.insertMany(input);
+  return res.status(200).json(createdCountries);
 });
 
 module.exports = router;

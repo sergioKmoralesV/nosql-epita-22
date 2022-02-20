@@ -11,6 +11,10 @@ const Country = mongoose.model('Country', {
     required: true,
     unique: true,
   },
+  population: {
+    type: Number,
+    required: true,
+  },
   continent: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Continent'

@@ -1,5 +1,4 @@
 module.exports = function loadRoutes (app) {
-  const countriesRoutes = require('./countries');
-
-  app.use('/countries', countriesRoutes);
+  app.use('/countries', require('./countries'));
+  app.use('/continents', require('./continents'));
 }
