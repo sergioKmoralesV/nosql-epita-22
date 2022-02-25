@@ -29,10 +29,10 @@ router.get('/:id', async (req, res) => {
 });
 
 //4 first by alphabetical order
-router.get('/:id/top4alphabetical', async (req, res) => {
+router.get('/top4alphabetical', async (req, res) => {
   const continentId = req.params.id;
 
-  const continents = await ContinentModel.findOne({_id: continentId}).populate({
+  const continents = await ContinentModel.find({}).populate({
     path: 'countries',
     options: {
       sort: {'name': 1},
