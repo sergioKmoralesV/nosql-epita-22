@@ -92,9 +92,15 @@ router.delete('/:id', async (req, res) => {
 router.get('/:id/top4alphabetical', async (req, res) => {
   const continentId = req.params.id;
 
-  const countries = await CountryModel.find({continent: continentId}).sort([['name', 1]]).limit(4);
+  const continents = await ContinentModel.findOne({_id: continentId}).populate({
+    path: 'countries',
+    options: {
+      sort: {'name': 1},
+      limit: 4,
+    }
+  });
 
-  return res.status(200).json(countries);
+  return res.status(200).json(continents);
 });
 
 module.exports = router;
