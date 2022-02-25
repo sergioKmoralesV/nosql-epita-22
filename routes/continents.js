@@ -13,6 +13,19 @@ router.get('/', async (req, res) => {
   res.status(200).json(continents);
 });
 
+//4 first by alphabetical order
+router.get('/top4alphabetical', async (req, res) => {
+  const continents = await ContinentModel.find({}).populate({
+    path: 'countries',
+    options: {
+      sort: {'name': 1},
+      limit: 4,
+    }
+  });
+
+  return res.status(200).json(continents);
+});
+
 router.get('/:id', async (req, res) => {
   const continentID = req.params.id;
   const continents = await ContinentModel.aggregate([
@@ -26,21 +39,6 @@ router.get('/:id', async (req, res) => {
   });
 
   res.status(200).json(continents[0]);
-});
-
-//4 first by alphabetical order
-router.get('/top4alphabetical', async (req, res) => {
-  const continentId = req.params.id;
-
-  const continents = await ContinentModel.find({}).populate({
-    path: 'countries',
-    options: {
-      sort: {'name': 1},
-      limit: 4,
-    }
-  });
-
-  return res.status(200).json(continents);
 });
 
 router.post('/', async (req, res) => {
