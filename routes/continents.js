@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const mongoose = require('mongoose')
 
 const ContinentModel = require('../models/Continent');
 const CountryModel = require('../models/Country');
+const {toObjectID, getUniques} = require('../utils');
 
 router.get('/', async (req, res) => {
   const continents = await ContinentModel.aggregate([
@@ -16,7 +16,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   const continentID = req.params.id;
   const continents = await ContinentModel.aggregate([
-    {$match: {_id: mongoose.Types.ObjectId(continentID)}},
+    {$match: {_id: toObjectID(continentID)}},
     {$addFields: {countryCount: {$size: '$countries'}}},
     {$lookup: {from: 'countries', localField: 'countries', 'foreignField': '_id', as: 'countries'}}
   ]);
@@ -32,11 +32,11 @@ router.post('/', async (req, res) => {
   const {name, countries} = req.body;
   const continent = await ContinentModel.create({
     name: name,
-    countries: countries || [],
+    countries: getUniques(countries) || [],
   });
 
   if(continent.countries.length !== 0) {
-    await CountryModel.updateMany({_id: {$in: continent.countries.map((c) => c.toString())}}, {continent: continent._id})
+    await CountryModel.updateMany({_id: {$in: continent.countries.map((c) => c.toString())}}, {continent: continent._id});
   }
   res.status(200).json(continent);
 });
@@ -52,7 +52,7 @@ router.post('/many', async (req, res) => {
   for(const continent of createdContinents) {
     //to refactor
     if(continent.countries.length !== 0) {
-      await CountryModel.updateMany({_id: {$in: continent.countries.map((c) => c.toString())}}, {continent: continent._id})
+      await CountryModel.updateMany({_id: {$in: continent.countries.map((c) => c.toString())}}, {continent: continent._id});
     }
   }
 
@@ -72,6 +72,8 @@ router.delete('/:id', async (req, res) => {
   const continentId = req.params.id;
 
   await ContinentModel.findOneAndDelete({_id: continentId});
+  await CountryModel.updateMany({continent: continentId}, {$unset: {continent: ''}});
+
   res.status(200).json({
     'msg': 'continent deleted'
   });
