@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 
 const CountryModel = require('../models/Country');
+const ContinentModel = require('../models/Continent');
+const {getUniques, toObjectID} = require('../utils');
 
 router.get('/', async (req, res) => {
   const countries = await CountryModel.find({});
@@ -39,6 +41,14 @@ router.get('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   const countryID = req.params.id;
 
+  const country = await CountryModel.findOne({_id: countryID});
+  if(country.continent) {
+    const continent = await ContinentModel.findOne({_id: country.continent});
+    const filteredCountries = continent.countries.filter((c) => c.toString() !== countryID).map(c => c.toString());
+    const updated = await ContinentModel.findOneAndUpdate({_id: country.continent}, {countries: filteredCountries}, {new: true});
+    console.log(updated)
+  }
+
   await CountryModel.findOneAndDelete({_id: countryID});
   res.status(200).json({
     'msg': 'country deleted'
@@ -47,9 +57,15 @@ router.delete('/:id', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   const countryID = req.params.id;
-  const {name, isoCode, population} = req.body;
+  const {name, isoCode, population, continent} = req.body;
 
-  const country = await CountryModel.findOneAndUpdate({_id: countryID}, {name, isoCode, population}, {new: true});
+  const continentToAdd = await ContinentModel.findOne({_id: continent})
+  if(continent && continentToAdd) {
+    const countries = getUniques(continentToAdd.countries.map((c)=> c.toString()).concat(countryID));
+    await ContinentModel.findOneAndUpdate({_id: continent}, {countries}, {new: true});
+  }
+
+  const country = await CountryModel.findOneAndUpdate({_id: countryID}, {name, isoCode, population, continent}, {new: true});
   return res.status(200).json(country);
 });
 

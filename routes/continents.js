@@ -59,11 +59,21 @@ router.post('/many', async (req, res) => {
   res.status(200).json(createdContinents);
 });
 
-router.put('/:id', async (req, res) => {
-  const continentId = req.params.id;
+router.put('/:id', async(req, res) => {
+  const continentID = req.params.id;
   const {name, countries} = req.body;
 
-  const continent = await ContinentModel.findOneAndUpdate({_id: continentId}, {name, countries}, {new: true});
+  let continent = await ContinentModel.findOne({_id: continentID});
+  const toDelete = [];
+  for(const country_id of continent.countries) {
+    if(!countries.includes(country_id)) {
+      toDelete.push(country_id)
+    }
+  }
+  await CountryModel.updateMany({_id: {$in: toDelete}}, {$unset: {continent: ''}});
+  await CountryModel.updateMany({_id: {$in: countries}}, {continent: continent._id});
+
+  continent = await ContinentModel.findOneAndUpdate({_id: continentID}, {name, countries}, {new: true})
 
   return res.status(200).json(continent);
 });
