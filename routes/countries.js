@@ -70,13 +70,20 @@ router.put('/:id', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const {name, isoCode, population} = req.body;
+  const {name, isoCode, population, continent} = req.body;
 
   const country = await CountryModel.create({
     name: name,
     isoCode: isoCode,
     population: population,
+    continent: continent,
   });
+
+  const continentToAdd = await ContinentModel.findOne({_id: continent})
+  if(continent && continentToAdd) {
+    const countries = getUniques(continentToAdd.countries.map((c)=> c.toString()).concat(country._id.toString()));
+    await ContinentModel.findOneAndUpdate({_id: continent}, {countries}, {new: true});
+  }
 
   return res.status(200).json(country);
 });
@@ -89,6 +96,7 @@ router.post('/many', async (req, res) => {
     isoCode: value.isoCode,
     population: value.population,
   }));
+
   const createdCountries = await CountryModel.insertMany(input);
   return res.status(200).json(createdCountries);
 });
