@@ -23,7 +23,7 @@ router.get('/count/:name', async (req, res) => {
     name: new RegExp('.*' + name + '.*'),
   });
   return res.status(200).json({
-    "msg": `total countries starting with ${name} : ${totalCountries}`
+    "msg": `total countries with ${name} in it : ${totalCountries}`
   });
 });
 
@@ -31,7 +31,7 @@ router.get('/:id', async (req, res) => {
   const countryID = req.params.id;
   const country = await CountryModel.findOne({_id: countryID});
 
-  if(!country) res.status(400).json({
+  if (!country) res.status(400).json({
     'msg': 'country not found'
   });
   return res.status(200).json(country);
@@ -42,7 +42,7 @@ router.delete('/:id', async (req, res) => {
   const countryID = req.params.id;
 
   const country = await CountryModel.findOne({_id: countryID});
-  if(country.continent) {
+  if (country.continent) {
     const continent = await ContinentModel.findOne({_id: country.continent});
     const filteredCountries = continent.countries.filter((c) => c.toString() !== countryID).map(c => c.toString());
     const updated = await ContinentModel.findOneAndUpdate({_id: country.continent}, {countries: filteredCountries}, {new: true});
@@ -60,12 +60,17 @@ router.put('/:id', async (req, res) => {
   const {name, isoCode, population, continent} = req.body;
 
   const continentToAdd = await ContinentModel.findOne({_id: continent})
-  if(continent && continentToAdd) {
-    const countries = getUniques(continentToAdd.countries.map((c)=> c.toString()).concat(countryID));
+  if (continent && continentToAdd) {
+    const countries = getUniques(continentToAdd.countries.map((c) => c.toString()).concat(countryID));
     await ContinentModel.findOneAndUpdate({_id: continent}, {countries}, {new: true});
   }
 
-  const country = await CountryModel.findOneAndUpdate({_id: countryID}, {name, isoCode, population, continent}, {new: true});
+  const country = await CountryModel.findOneAndUpdate({_id: countryID}, {
+    name,
+    isoCode,
+    population,
+    continent
+  }, {new: true});
   return res.status(200).json(country);
 });
 
@@ -80,8 +85,8 @@ router.post('/', async (req, res) => {
   });
 
   const continentToAdd = await ContinentModel.findOne({_id: continent})
-  if(continent && continentToAdd) {
-    const countries = getUniques(continentToAdd.countries.map((c)=> c.toString()).concat(country._id.toString()));
+  if (continent && continentToAdd) {
+    const countries = getUniques(continentToAdd.countries.map((c) => c.toString()).concat(country._id.toString()));
     await ContinentModel.findOneAndUpdate({_id: continent}, {countries}, {new: true});
   }
 
@@ -100,11 +105,11 @@ router.post('/many', async (req, res) => {
 
   const createdCountries = await CountryModel.insertMany(input);
 
-  for(const country of createdCountries) {
-    if(country.continent) {
+  for (const country of createdCountries) {
+    if (country.continent) {
       const continentToAdd = await ContinentModel.findOne({_id: country.continent})
-      if(continentToAdd) {
-        const countries = getUniques(continentToAdd.countries.map((c)=> c.toString()).concat(country._id.toString()));
+      if (continentToAdd) {
+        const countries = getUniques(continentToAdd.countries.map((c) => c.toString()).concat(country._id.toString()));
         await ContinentModel.findOneAndUpdate({_id: country.continent}, {countries}, {new: true});
       }
     }

@@ -21,7 +21,7 @@ router.get('/:id', async (req, res) => {
     {$lookup: {from: 'countries', localField: 'countries', 'foreignField': '_id', as: 'countries'}}
   ]);
 
-  if(continents.length === 0) res.status(400).json({
+  if (continents.length === 0) res.status(400).json({
     'msg': 'continent not found'
   });
 
@@ -35,7 +35,7 @@ router.post('/', async (req, res) => {
     countries: getUniques(countries) || [],
   });
 
-  if(continent.countries.length !== 0) {
+  if (continent.countries.length !== 0) {
     await CountryModel.updateMany({_id: {$in: continent.countries.map((c) => c.toString())}}, {continent: continent._id});
   }
   res.status(200).json(continent);
@@ -49,8 +49,8 @@ router.post('/many', async (req, res) => {
   }));
   const createdContinents = await ContinentModel.insertMany(input);
 
-  for(const continent of createdContinents) {
-    if(continent.countries.length !== 0) {
+  for (const continent of createdContinents) {
+    if (continent.countries.length !== 0) {
       await CountryModel.updateMany({_id: {$in: continent.countries.map((c) => c.toString())}}, {continent: continent._id});
     }
   }
@@ -58,14 +58,14 @@ router.post('/many', async (req, res) => {
   res.status(200).json(createdContinents);
 });
 
-router.put('/:id', async(req, res) => {
+router.put('/:id', async (req, res) => {
   const continentID = req.params.id;
   const {name, countries} = req.body;
 
   let continent = await ContinentModel.findOne({_id: continentID});
   const toDelete = [];
-  for(const country_id of continent.countries) {
-    if(!countries.includes(country_id)) {
+  for (const country_id of continent.countries) {
+    if (!countries.includes(country_id)) {
       toDelete.push(country_id)
     }
   }
@@ -86,6 +86,15 @@ router.delete('/:id', async (req, res) => {
   res.status(200).json({
     'msg': 'continent deleted'
   });
+});
+
+//4 first by alphabetical order
+router.get('/:id/top4alphabetical', async (req, res) => {
+  const continentId = req.params.id;
+
+  const countries = await CountryModel.find({continent: continentId}).sort([['name', 1]]).limit(4);
+
+  return res.status(200).json(countries);
 });
 
 module.exports = router;
