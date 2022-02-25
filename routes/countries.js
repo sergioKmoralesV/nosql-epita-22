@@ -27,6 +27,23 @@ router.get('/count/:name', async (req, res) => {
   });
 });
 
+router.get('/sortPopulation', async (req, res) => {
+  const countries = await CountryModel.find({}).sort([['population', 1]]);
+
+  res.status(200).json(countries);
+});
+
+router.get('/nameOver100k/:name', async (req, res) => {
+  const name = req.params.name;
+
+  const countries = await CountryModel.find({
+    name: new RegExp('.*' + name + '.*'),
+    population: {$gte: 100000},
+  }).sort([['population', 1]]);
+
+  res.status(200).json(countries);
+});
+
 router.get('/:id', async (req, res) => {
   const countryID = req.params.id;
   const country = await CountryModel.findOne({_id: countryID});
