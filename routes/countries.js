@@ -95,9 +95,21 @@ router.post('/many', async (req, res) => {
     name: value.name,
     isoCode: value.isoCode,
     population: value.population,
+    continent: value.continent,
   }));
 
   const createdCountries = await CountryModel.insertMany(input);
+
+  for(const country of createdCountries) {
+    if(country.continent) {
+      const continentToAdd = await ContinentModel.findOne({_id: country.continent})
+      if(continentToAdd) {
+        const countries = getUniques(continentToAdd.countries.map((c)=> c.toString()).concat(country._id.toString()));
+        await ContinentModel.findOneAndUpdate({_id: country.continent}, {countries}, {new: true});
+      }
+    }
+  }
+
   return res.status(200).json(createdCountries);
 });
 

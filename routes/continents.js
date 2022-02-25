@@ -50,7 +50,6 @@ router.post('/many', async (req, res) => {
   const createdContinents = await ContinentModel.insertMany(input);
 
   for(const continent of createdContinents) {
-    //to refactor
     if(continent.countries.length !== 0) {
       await CountryModel.updateMany({_id: {$in: continent.countries.map((c) => c.toString())}}, {continent: continent._id});
     }
